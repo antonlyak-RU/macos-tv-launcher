@@ -116,11 +116,10 @@ data class SystemMetrics(
     val totalStorageGb: String = "0.0"
 )
 
-// Настройки кастомного курсора фокуса
 data class CursorConfig(
     val color: Color = Color(0xFF00E5FF),
     val strokeWidthDp: Float = 2.5f,
-    val animationMode: Int = 1, // 0: Выкл (Статичный), 1: Сияние, 2: Переливание, 3: Круговорот (RGB)
+    val animationMode: Int = 1,
     val speedMs: Int = 1800
 )
 
@@ -138,26 +137,22 @@ fun MacOsDesktop(context: Context) {
     val prefs = remember { context.getSharedPreferences("macos_prefs", Context.MODE_PRIVATE) }
     val apps = remember { loadInstalledAppsOptimized(context) }
 
-    // --- НАСТРОЙКИ ИКОНОК И ТЕМЫ ---
     var iconBaseSize by remember { mutableStateOf(prefs.getInt("icon_size", 44)) }
     var iconCornerRadius by remember { mutableStateOf(prefs.getInt("icon_corner", 14)) }
     var iconVisualStyle by remember { mutableStateOf(prefs.getInt("icon_style", 0)) }
     var accentThemeIndex by remember { mutableStateOf(prefs.getInt("accent_idx", 0)) }
 
-    // --- НАСТРОЙКИ КУРСОРА ---
     var cursorColorIndex by remember { mutableStateOf(prefs.getInt("cur_color", 1)) }
-    var cursorWidthIndex by remember { mutableStateOf(prefs.getInt("cur_width", 1)) } // 0: 1.5dp, 1: 2.5dp, 2: 3.5dp, 3: 5.0dp
-    var cursorAnimMode by remember { mutableStateOf(prefs.getInt("cur_anim", 3)) }   // 0: Выкл, 1: Сияние, 2: Переливание, 3: Круговорот
-    var cursorSpeedIndex by remember { mutableStateOf(prefs.getInt("cur_speed", 1)) } // 0: Медленно, 1: Средне, 2: Быстро
+    var cursorWidthIndex by remember { mutableStateOf(prefs.getInt("cur_width", 1)) }
+    var cursorAnimMode by remember { mutableStateOf(prefs.getInt("cur_anim", 3)) }
+    var cursorSpeedIndex by remember { mutableStateOf(prefs.getInt("cur_speed", 1)) }
 
-    // --- НАСТРОЙКИ НИЖНЕГО DOCK ---
     var dockAlpha by remember { mutableStateOf(prefs.getFloat("dock_alpha", 0.18f)) }
     var dockColorIndex by remember { mutableStateOf(prefs.getInt("dock_color", 0)) }
     var dockHeightDp by remember { mutableStateOf(prefs.getInt("dock_height", 76)) }
     var dockCornerRadius by remember { mutableStateOf(prefs.getInt("dock_corner", 24)) }
     var dockPositionIndex by remember { mutableStateOf(prefs.getInt("dock_pos", 0)) }
 
-    // --- НАСТРОЙКИ ЧАСОВ И ВИДЖЕТОВ ---
     var clockFontSize by remember { mutableStateOf(prefs.getInt("clock_size", 72)) }
     var clockOffsetX by remember { mutableStateOf(prefs.getInt("clock_x", 0)) }
     var clockOffsetY by remember { mutableStateOf(prefs.getInt("clock_y", -30)) }
@@ -173,21 +168,21 @@ fun MacOsDesktop(context: Context) {
     var videoWallpaperPath by remember { mutableStateOf(getSavedVideoPath(context)) }
 
     val accentColors = listOf(
-        Color(0xFF0A84FF), // Синий macOS
-        Color(0xFF30D158), // Изумрудный
-        Color(0xFFBF5AF2), // Пурпурный
-        Color(0xFFFF9F0A), // Золотой
-        Color(0xFFFF453A)  // Красный
+        Color(0xFF0A84FF),
+        Color(0xFF30D158),
+        Color(0xFFBF5AF2),
+        Color(0xFFFF9F0A),
+        Color(0xFFFF453A)
     )
     val accentColor = accentColors.getOrElse(accentThemeIndex) { accentColors[0] }
 
     val cursorColors = listOf(
-        Color.White,           // 0: Белый
-        Color(0xFF00E5FF),     // 1: Голубой неон
-        Color(0xFF30D158),     // 2: Изумрудный
-        Color(0xFFBF5AF2),     // 3: Пурпурный
-        Color(0xFFFFD60A),     // 4: Золотой
-        Color(0xFFFF375F)      // 5: Алый
+        Color.White,
+        Color(0xFF00E5FF),
+        Color(0xFF30D158),
+        Color(0xFFBF5AF2),
+        Color(0xFFFFD60A),
+        Color(0xFFFF375F)
     )
     val cursorWidths = listOf(1.5f, 2.5f, 3.8f, 5.0f)
     val cursorSpeeds = listOf(2800, 1600, 850)
@@ -291,7 +286,6 @@ fun MacOsDesktop(context: Context) {
         }
     }
 
-    // 1. Обновление часов и системной информации
     LaunchedEffect(isLauncherVisible, showSysInfoWidget) {
         var lastCpuTime = Process.getElapsedCpuTime()
         var lastRealTime = SystemClock.elapsedRealtime()
@@ -316,7 +310,6 @@ fun MacOsDesktop(context: Context) {
         }
     }
 
-    // 2. Обновление погоды (г. Орёл) и валют (EUR/RUB, EUR/USD)
     LaunchedEffect(isLauncherVisible, showWeatherWidget, showCurrencyWidget) {
         while (isLauncherVisible) {
             withContext(Dispatchers.IO) {
@@ -374,7 +367,6 @@ fun MacOsDesktop(context: Context) {
                 }
             }
     ) {
-        // --- 1. ФОН РАБОЧЕГО СТОЛА ---
         when {
             wallpaperPreset == -2 && videoWallpaperPath != null -> {
                 VideoWallpaperView(
@@ -400,7 +392,6 @@ fun MacOsDesktop(context: Context) {
             }
         }
 
-        // --- 2. ВЕРХНИЙ БАР ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -494,4 +485,22 @@ fun MacOsDesktop(context: Context) {
                         onFocused = { focusedAppName = "Фото и видеообои рабочего стола" },
                         onClick = {
                             showLaunchpad = false
-                          
+                            editDockMode = false
+                            showHdmiDialog = false
+                            showLauncherSettings = false
+                            showWallpaperDialog = !showWallpaperDialog
+                        }
+                    )
+                }
+
+                item {
+                    TopBarButton(
+                        text = "📺 HDMI",
+                        isActive = showHdmiDialog,
+                        accentColor = accentColor,
+                        cursorConfig = cursorConfig,
+                        onFocused = { focusedAppName = "Переключение входов телевизора" },
+                        onClick = {
+                            showLaunchpad = false
+                            editDockMode = false
+                      
